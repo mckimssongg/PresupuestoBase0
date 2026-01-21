@@ -72,12 +72,7 @@ async function renderApp() {
       ${await renderCurrentView()}
     </main>
     
-    <!-- FAB for quick expense -->
-    <button class="btn btn-fab" id="fab-btn" aria-label="Agregar gasto rápido">
-      ${getIcon('plus')}
-    </button>
-    
-    <!-- Bottom Navigation -->
+    <!-- Bottom Navigation with centered Add button -->
     <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
       <button class="nav-item ${state.currentView === 'dashboard' ? 'active' : ''}" 
               data-view="dashboard" aria-label="Dashboard">
@@ -89,15 +84,16 @@ async function renderApp() {
         ${getIcon('wallet')}
         <span>Fijos</span>
       </button>
+      
+      <!-- Central Add Button -->
+      <button class="nav-add-btn" id="fab-btn" aria-label="Agregar gasto">
+        ${getIcon('plus')}
+      </button>
+      
       <button class="nav-item ${state.currentView === 'categories' ? 'active' : ''}" 
               data-view="categories" aria-label="Categorías">
         ${getIcon('category')}
         <span>Categorías</span>
-      </button>
-      <button class="nav-item ${state.currentView === 'history' ? 'active' : ''}" 
-              data-view="history" aria-label="Historial">
-        ${getIcon('history')}
-        <span>Historial</span>
       </button>
       <button class="nav-item ${state.currentView === 'settings' ? 'active' : ''}" 
               data-view="settings" aria-label="Ajustes">

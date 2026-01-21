@@ -173,10 +173,10 @@ h3 { font-size: var(--font-size-lg); }
   background: var(--bg-secondary);
   backdrop-filter: blur(10px);
   border-top: 1px solid var(--bg-tertiary);
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  padding-top: var(--space-sm);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  justify-items: center;
   padding-bottom: var(--safe-area-bottom);
   z-index: 100;
 }
@@ -202,6 +202,39 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .nav-item svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* Central Add Button in Nav */
+.nav-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: var(--accent-primary);
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--bg-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  top: -12px;
+  box-shadow: var(--shadow-md), 0 0 12px rgba(0, 212, 170, 0.3);
+  flex-shrink: 0;
+}
+
+.nav-add-btn:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 212, 170, 0.4);
+}
+
+.nav-add-btn:active {
+  transform: scale(0.95);
+}
+
+.nav-add-btn svg {
   width: 24px;
   height: 24px;
 }
