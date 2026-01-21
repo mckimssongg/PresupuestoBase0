@@ -36,7 +36,7 @@ export async function renderCategories(selectedCategoryId = null) {
         </div>
         
         ${categoriesWithSpending.length > 0 ? `
-          <div class="categories-container" id="categories-list">
+          <div class="categories-container draggable-list" id="categories-list">
             ${categoriesWithSpending.map(cat => renderCategoryItem(cat, currency, selectedCategoryId === cat.id)).join('')}
           </div>
         ` : `
@@ -61,11 +61,12 @@ function renderCategoryItem(category, currency, isExpanded = false) {
   const { id, name, color, budgetLimit, spent, remaining, percentage, expenseCount } = category;
   
   return `
-    <div class="category-item-wrapper" data-category-id="${id}">
+    <div class="category-item-wrapper draggable-item" data-category-id="${id}" draggable="true">
       <div class="category-item category-expandable ${isExpanded ? 'expanded' : ''}" 
            role="button" tabindex="0" aria-expanded="${isExpanded}">
         <div class="category-header">
-          <div class="category-name">
+          <div class="category-name" style="display: flex; align-items: center; gap: var(--space-sm);">
+            <span class="drag-handle">${getIcon('grip')}</span>
             <span class="category-dot" style="background: ${color}"></span>
             <span>${name}</span>
             ${expenseCount > 0 ? `<span style="font-size: var(--font-size-xs); color: var(--text-tertiary);">(${expenseCount})</span>` : ''}
@@ -193,6 +194,84 @@ export function initCategories(refreshView) {
           refreshView();
         } catch (error) {
           handleError(error, 'deleteCategory');
+        }
+      }
+    });
+  });
+  
+  // Drag and Drop reordering
+  initCategoryDragAndDrop('#categories-list', async (orderedIds) => {
+    try {
+      await db.reorderCategories(orderedIds);
+    } catch (error) {
+      handleError(error, 'reorderCategories');
+    }
+  });
+}
+
+/**
+ * Initialize drag and drop for categories
+ */
+function initCategoryDragAndDrop(listSelector, onReorder) {
+  const list = document.querySelector(listSelector);
+  if (!list) return;
+  
+  let draggedItem = null;
+  
+  list.querySelectorAll('.draggable-item').forEach(item => {
+    const handle = item.querySelector('.drag-handle');
+    
+    // Only allow drag from handle
+    handle?.addEventListener('mousedown', () => {
+      item.setAttribute('draggable', 'true');
+    });
+    
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      item.setAttribute('draggable', 'true');
+      list.querySelectorAll('.draggable-item').forEach(i => {
+        i.classList.remove('drag-over');
+      });
+      
+      const orderedIds = Array.from(list.querySelectorAll('.draggable-item'))
+        .map(i => i.dataset.categoryId);
+      onReorder(orderedIds);
+      
+      draggedItem = null;
+    });
+    
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      
+      if (draggedItem !== item) {
+        item.classList.add('drag-over');
+      }
+    });
+    
+    item.addEventListener('dragleave', () => {
+      item.classList.remove('drag-over');
+    });
+    
+    item.addEventListener('drop', (e) => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      
+      if (draggedItem !== item) {
+        const items = Array.from(list.querySelectorAll('.draggable-item'));
+        const draggedIndex = items.indexOf(draggedItem);
+        const dropIndex = items.indexOf(item);
+        
+        if (draggedIndex < dropIndex) {
+          item.after(draggedItem);
+        } else {
+          item.before(draggedItem);
         }
       }
     });

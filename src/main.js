@@ -6,10 +6,9 @@
 import './styles/index.css';
 import { getDB } from './db/database.js';
 import { getIcon } from './components/Icons.js';
-import { renderDashboard, initDashboard } from './components/Dashboard.js';
+import { renderDashboard, initDashboard, destroyDashboardCharts } from './components/Dashboard.js';
 import { renderFixedExpenses, initFixedExpenses } from './components/FixedExpenses.js';
 import { renderCategories, initCategories, openAddExpenseModal } from './components/Categories.js';
-import { renderCharts, initCharts, destroyCharts } from './components/Charts.js';
 import { renderHistory, initHistory } from './components/History.js';
 import { renderSettings, initSettings } from './components/Settings.js';
 import { handleError, showToast } from './utils/errorHandler.js';
@@ -125,8 +124,6 @@ async function renderCurrentView() {
       return renderFixedExpenses();
     case 'categories':
       return renderCategories();
-    case 'charts':
-      return renderCharts();
     case 'history':
       return renderHistory();
     case 'settings':
@@ -150,9 +147,6 @@ function initCurrentView() {
     case 'categories':
       initCategories(refreshCurrentView);
       break;
-    case 'charts':
-      initCharts();
-      break;
     case 'history':
       initHistory();
       break;
@@ -171,8 +165,8 @@ function initNavigation() {
       const view = item.dataset.view;
       if (view !== state.currentView) {
         // Cleanup current view
-        if (state.currentView === 'charts') {
-          destroyCharts();
+        if (state.currentView === 'dashboard') {
+          destroyDashboardCharts();
         }
         
         state.currentView = view;
@@ -191,8 +185,8 @@ function initNavigation() {
     const { view, categoryId } = e.detail;
     if (view) {
       // Cleanup current view
-      if (state.currentView === 'charts') {
-        destroyCharts();
+      if (state.currentView === 'dashboard') {
+        destroyDashboardCharts();
       }
       
       state.currentView = view;

@@ -4,7 +4,7 @@
  */
 
 export const DB_NAME = 'presupuesto-base-cero';
-export const DB_VERSION = 2; // Upgraded for monthly archives
+export const DB_VERSION = 3; // Added order field for drag-drop
 
 /**
  * Store names
@@ -38,6 +38,7 @@ export const FIXED_EXPENSE_SCHEMA = {
   id: null, // Auto-generated UUID
   name: '',
   amount: 0,
+  order: 0, // For drag-drop reordering
   createdAt: null,
   updatedAt: null
 };
@@ -52,6 +53,7 @@ export const CATEGORY_SCHEMA = {
   budgetLimit: 0,
   color: '#00d4aa',
   icon: null,
+  order: 0, // For drag-drop reordering
   createdAt: null,
   updatedAt: null
 };

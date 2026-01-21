@@ -155,11 +155,12 @@ export async function updateSettings(updates) {
 // ==========================================
 
 /**
- * Get all fixed expenses
+ * Get all fixed expenses sorted by order
  */
 export async function getAllFixedExpenses() {
   const db = await getDB();
-  return db.getAllFromIndex(STORES.FIXED_EXPENSES, 'createdAt');
+  const expenses = await db.getAll(STORES.FIXED_EXPENSES);
+  return expenses.sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
 /**
@@ -169,10 +170,15 @@ export async function createFixedExpense(data) {
   const db = await getDB();
   const now = new Date().toISOString();
   
+  // Get max order
+  const all = await db.getAll(STORES.FIXED_EXPENSES);
+  const maxOrder = all.reduce((max, item) => Math.max(max, item.order || 0), 0);
+  
   const expense = {
     id: generateId(),
     name: data.name?.trim() || '',
     amount: parseFloat(data.amount) || 0,
+    order: maxOrder + 1,
     createdAt: now,
     updatedAt: now
   };
@@ -210,16 +216,38 @@ export async function deleteFixedExpense(id) {
   await db.delete(STORES.FIXED_EXPENSES, id);
 }
 
+/**
+ * Reorder fixed expenses
+ * @param {Array} orderedIds - Array of IDs in new order
+ */
+export async function reorderFixedExpenses(orderedIds) {
+  const db = await getDB();
+  const tx = db.transaction(STORES.FIXED_EXPENSES, 'readwrite');
+  const store = tx.objectStore(STORES.FIXED_EXPENSES);
+  
+  for (let i = 0; i < orderedIds.length; i++) {
+    const item = await store.get(orderedIds[i]);
+    if (item) {
+      item.order = i;
+      item.updatedAt = new Date().toISOString();
+      await store.put(item);
+    }
+  }
+  
+  await tx.done;
+}
+
 // ==========================================
 // Categories Operations
 // ==========================================
 
 /**
- * Get all categories
+ * Get all categories sorted by order
  */
 export async function getAllCategories() {
   const db = await getDB();
-  return db.getAllFromIndex(STORES.CATEGORIES, 'createdAt');
+  const categories = await db.getAll(STORES.CATEGORIES);
+  return categories.sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
 /**
@@ -237,12 +265,17 @@ export async function createCategory(data) {
   const db = await getDB();
   const now = new Date().toISOString();
   
+  // Get max order
+  const all = await db.getAll(STORES.CATEGORIES);
+  const maxOrder = all.reduce((max, item) => Math.max(max, item.order || 0), 0);
+  
   const category = {
     id: generateId(),
     name: data.name?.trim() || '',
     budgetLimit: parseFloat(data.budgetLimit) || 0,
     color: data.color || '#00d4aa',
     icon: data.icon || null,
+    order: maxOrder + 1,
     createdAt: now,
     updatedAt: now
   };
@@ -291,6 +324,27 @@ export async function deleteCategory(id) {
   
   // Delete category
   await tx.objectStore(STORES.CATEGORIES).delete(id);
+  await tx.done;
+}
+
+/**
+ * Reorder categories
+ * @param {Array} orderedIds - Array of IDs in new order
+ */
+export async function reorderCategories(orderedIds) {
+  const db = await getDB();
+  const tx = db.transaction(STORES.CATEGORIES, 'readwrite');
+  const store = tx.objectStore(STORES.CATEGORIES);
+  
+  for (let i = 0; i < orderedIds.length; i++) {
+    const item = await store.get(orderedIds[i]);
+    if (item) {
+      item.order = i;
+      item.updatedAt = new Date().toISOString();
+      await store.put(item);
+    }
+  }
+  
   await tx.done;
 }
 

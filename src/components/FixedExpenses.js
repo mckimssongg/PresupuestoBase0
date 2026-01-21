@@ -80,10 +80,11 @@ export async function renderFixedExpenses() {
         </div>
         
         ${fixedExpenses.length > 0 ? `
-          <ul class="list" id="fixed-expenses-list">
+          <ul class="list draggable-list" id="fixed-expenses-list">
             ${fixedExpenses.map(expense => `
-              <li class="list-item" data-id="${expense.id}">
-                <div class="list-item-content">
+              <li class="list-item draggable-item" data-id="${expense.id}" draggable="true">
+                <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                  <span class="drag-handle">${getIcon('grip')}</span>
                   <span class="list-item-title">${expense.name}</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: var(--space-sm);">
@@ -158,6 +159,77 @@ export function initFixedExpenses(refreshView) {
           refreshView();
         } catch (error) {
           handleError(error, 'deleteFixedExpense');
+        }
+      }
+    });
+  });
+  
+  // Drag and Drop reordering
+  initDragAndDrop('#fixed-expenses-list', async (orderedIds) => {
+    try {
+      await db.reorderFixedExpenses(orderedIds);
+    } catch (error) {
+      handleError(error, 'reorderFixedExpenses');
+    }
+  });
+}
+
+/**
+ * Initialize drag and drop for a list
+ */
+function initDragAndDrop(listSelector, onReorder) {
+  const list = document.querySelector(listSelector);
+  if (!list) return;
+  
+  let draggedItem = null;
+  
+  list.querySelectorAll('.draggable-item').forEach(item => {
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      list.querySelectorAll('.draggable-item').forEach(i => {
+        i.classList.remove('drag-over');
+      });
+      
+      // Get new order and save
+      const orderedIds = Array.from(list.querySelectorAll('.draggable-item'))
+        .map(i => i.dataset.id);
+      onReorder(orderedIds);
+      
+      draggedItem = null;
+    });
+    
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      
+      if (draggedItem !== item) {
+        item.classList.add('drag-over');
+      }
+    });
+    
+    item.addEventListener('dragleave', () => {
+      item.classList.remove('drag-over');
+    });
+    
+    item.addEventListener('drop', (e) => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      
+      if (draggedItem !== item) {
+        const items = Array.from(list.querySelectorAll('.draggable-item'));
+        const draggedIndex = items.indexOf(draggedItem);
+        const dropIndex = items.indexOf(item);
+        
+        if (draggedIndex < dropIndex) {
+          item.after(draggedItem);
+        } else {
+          item.before(draggedItem);
         }
       }
     });

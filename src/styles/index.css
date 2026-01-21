@@ -869,3 +869,48 @@ h3 { font-size: var(--font-size-lg); }
     padding: 0 var(--space-lg);
   }
 }
+
+/* Drag and Drop */
+.draggable-list {
+  touch-action: pan-y;
+}
+
+.draggable-item {
+  cursor: grab;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.draggable-item:active {
+  cursor: grabbing;
+}
+
+.draggable-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+  background: var(--bg-tertiary);
+}
+
+.draggable-item.drag-over {
+  border-top: 2px solid var(--accent-primary);
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--text-tertiary);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
