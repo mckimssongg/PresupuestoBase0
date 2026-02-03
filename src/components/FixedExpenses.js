@@ -83,11 +83,11 @@ export async function renderFixedExpenses() {
           <ul class="list draggable-list" id="fixed-expenses-list">
             ${fixedExpenses.map(expense => `
               <li class="list-item draggable-item" data-id="${expense.id}" draggable="true">
-                <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                <div class="list-item-left">
                   <span class="drag-handle">${getIcon('grip')}</span>
                   <span class="list-item-title">${expense.name}</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                <div class="list-item-right">
                   <span class="list-item-amount expense">${formatCurrency(expense.amount, currency)}</span>
                   <button class="btn btn-ghost btn-icon edit-fixed-btn" data-id="${expense.id}" aria-label="Editar">
                     ${getIcon('edit')}

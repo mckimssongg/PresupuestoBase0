@@ -161,11 +161,14 @@ export async function renderDashboard() {
                   <div class="category-header">
                     <div class="category-name">
                       <span class="category-dot" style="background: ${cat.color}"></span>
-                      <span>${cat.name}</span>
+                      <span class="category-name-text">${cat.name}</span>
                     </div>
-                    <div class="category-amounts">
-                      <span class="amount-spent">${formatCurrency(cat.spent, currency)}</span>
-                      <span class="amount-budget">de ${formatCurrency(cat.budgetLimit, currency)}</span>
+                    <div class="category-right">
+                      ${cat.percentage >= 80 ? `<span class="category-warning" title="Más del 80% del presupuesto usado">${getIcon('alertTriangle')}</span>` : ''}
+                      <div class="category-amounts">
+                        <span class="amount-spent">${formatCurrency(cat.spent, currency)}</span>
+                        <span class="amount-budget">de ${formatCurrency(cat.budgetLimit, currency)}</span>
+                      </div>
                     </div>
                   </div>
                   <div class="progress-bar">
@@ -278,7 +281,7 @@ export function initDashboard() {
         t.setAttribute('aria-selected', t.dataset.tab === tabId);
       });
       
-      // Update panels
+      // Update panels with animation
       document.querySelectorAll('.dashboard-panel').forEach(panel => {
         panel.style.display = 'none';
         panel.classList.remove('active');
@@ -286,7 +289,12 @@ export function initDashboard() {
       const activePanel = document.getElementById(`${tabId}-panel`);
       if (activePanel) {
         activePanel.style.display = 'block';
-        activePanel.classList.add('active');
+        activePanel.classList.add('active', 'view-transition-fade-in');
+        
+        // Remove animation class after transition
+        setTimeout(() => {
+          activePanel.classList.remove('view-transition-fade-in');
+        }, 300);
         
         // Initialize charts if switching to analysis
         if (tabId === 'analisis') {

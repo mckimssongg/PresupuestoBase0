@@ -13,7 +13,44 @@ import { calculatePercentage } from '../utils/helpers.js';
  */
 export async function getBudgetOverview(month = null) {
   const targetMonth = month || db.getCurrentMonth();
+  const isCurrentMonth = targetMonth === db.getCurrentMonth();
   
+  // Check for archived data first (for past months)
+  const archive = !isCurrentMonth ? await db.getArchive(targetMonth) : null;
+  
+  if (archive) {
+    // Use archived data for past months
+    const { summary, fixedExpenses, categories, expenses } = archive;
+    const monthlyIncome = summary.monthlyIncome || 0;
+    const totalFixedExpenses = fixedExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalBudgeted = categories.reduce((sum, c) => sum + c.budgetLimit, 0);
+    const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
+    
+    const availableForBudget = monthlyIncome - totalFixedExpenses;
+    const remainingBudget = totalBudgeted - totalSpent;
+    const unassigned = availableForBudget - totalBudgeted;
+    const realAvailable = monthlyIncome - totalFixedExpenses - totalSpent;
+    
+    return {
+      monthlyIncome,
+      totalFixedExpenses,
+      totalBudgeted,
+      totalSpent,
+      availableForBudget,
+      remainingBudget,
+      unassigned,
+      realAvailable,
+      currency: summary.currency || 'Q',
+      currentMonth: targetMonth,
+      isCurrentMonth: false,
+      isArchived: true,
+      fixedExpensesPercent: calculatePercentage(totalFixedExpenses, monthlyIncome),
+      budgetedPercent: calculatePercentage(totalBudgeted, availableForBudget),
+      spentPercent: calculatePercentage(totalSpent, totalBudgeted)
+    };
+  }
+  
+  // Use current configuration for current month (or unarchived months)
   const [settings, fixedExpenses, categories, expenses] = await Promise.all([
     db.getSettings(),
     db.getAllFixedExpenses(),
@@ -49,7 +86,8 @@ export async function getBudgetOverview(month = null) {
     realAvailable,
     currency: settings?.currency || 'Q',
     currentMonth: targetMonth,
-    isCurrentMonth: targetMonth === db.getCurrentMonth(),
+    isCurrentMonth,
+    isArchived: false,
     // Percentages
     fixedExpensesPercent: calculatePercentage(totalFixedExpenses, monthlyIncome),
     budgetedPercent: calculatePercentage(totalBudgeted, availableForBudget),
@@ -89,6 +127,25 @@ export async function getCategoryWithSpending(categoryId) {
  * @returns {Promise<Array>} Categories with spending
  */
 export async function getAllCategoriesWithSpending(month = null) {
+  const targetMonth = month || db.getCurrentMonth();
+  const isCurrentMonth = targetMonth === db.getCurrentMonth();
+  
+  // Check for archived data first (for past months)
+  const archive = !isCurrentMonth ? await db.getArchive(targetMonth) : null;
+  
+  if (archive) {
+    // Use archived categories with their historical budgets and spending
+    return archive.categories.map(category => ({
+      ...category,
+      // Ensure we have all required fields
+      spent: category.spent || 0,
+      remaining: category.remaining || (category.budgetLimit - (category.spent || 0)),
+      percentage: category.percentage || calculatePercentage(category.spent || 0, category.budgetLimit),
+      expenseCount: archive.expenses.filter(e => e.categoryId === category.id).length
+    }));
+  }
+  
+  // Use current configuration for current month
   const [categories, expenses] = await Promise.all([
     db.getAllCategories(),
     db.getExpensesForMonth(month)

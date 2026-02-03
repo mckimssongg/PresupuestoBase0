@@ -14,6 +14,15 @@ export function formatCurrency(amount, currency = 'Q') {
   const absAmount = Math.abs(amount);
   const sign = amount < 0 ? '-' : '';
   
+  if (absAmount >= 1000000) {
+    const formatter = new Intl.NumberFormat('es-GT', {
+      notation: 'compact',
+      compactDisplay: 'short',
+      maximumFractionDigits: 1
+    });
+    return `${sign}${currency}${formatter.format(absAmount)}`;
+  }
+  
   const formatted = absAmount.toLocaleString('es-GT', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2

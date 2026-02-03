@@ -165,8 +165,29 @@ function initNavigation() {
           destroyDashboardCharts();
         }
         
+        const mainContent = document.getElementById('main-content');
         state.currentView = view;
-        await refreshCurrentView();
+        
+        // Simple fade transition without flicker
+        if (mainContent) {
+          mainContent.style.opacity = '0';
+          mainContent.style.transform = 'translateY(10px)';
+          
+          await refreshCurrentView();
+          
+          // Trigger reflow and animate in
+          requestAnimationFrame(() => {
+            mainContent.style.transition = 'opacity 0.15s ease-out, transform 0.15s ease-out';
+            mainContent.style.opacity = '1';
+            mainContent.style.transform = 'translateY(0)';
+            
+            setTimeout(() => {
+              mainContent.style.transition = '';
+            }, 150);
+          });
+        } else {
+          await refreshCurrentView();
+        }
         
         // Update nav state
         document.querySelectorAll('.nav-item').forEach(nav => {
@@ -185,8 +206,28 @@ function initNavigation() {
         destroyDashboardCharts();
       }
       
+      const mainContent = document.getElementById('main-content');
       state.currentView = view;
-      await refreshCurrentView(categoryId);
+      
+      // Simple fade transition
+      if (mainContent) {
+        mainContent.style.opacity = '0';
+        mainContent.style.transform = 'translateY(10px)';
+        
+        await refreshCurrentView(categoryId);
+        
+        requestAnimationFrame(() => {
+          mainContent.style.transition = 'opacity 0.15s ease-out, transform 0.15s ease-out';
+          mainContent.style.opacity = '1';
+          mainContent.style.transform = 'translateY(0)';
+          
+          setTimeout(() => {
+            mainContent.style.transition = '';
+          }, 150);
+        });
+      } else {
+        await refreshCurrentView(categoryId);
+      }
       
       // Update nav state
       document.querySelectorAll('.nav-item').forEach(nav => {

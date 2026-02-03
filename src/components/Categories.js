@@ -68,10 +68,11 @@ function renderCategoryItem(category, currency, isExpanded = false) {
           <div class="category-name">
             <span class="drag-handle">${getIcon('grip')}</span>
             <span class="category-dot" style="background: ${color}"></span>
-            <span>${name}</span>
-            ${expenseCount > 0 ? `<span style="font-size: var(--font-size-xs); color: var(--text-tertiary);">(${expenseCount})</span>` : ''}
+            <span class="category-name-text">${name}</span>
+            ${expenseCount > 0 ? `<span class="category-count">(${expenseCount})</span>` : ''}
           </div>
-          <div style="display: flex; align-items: center; gap: var(--space-xs);">
+          <div class="category-right">
+            ${percentage >= 80 ? `<span class="category-warning" title="Más del 80% del presupuesto usado">${getIcon('alertTriangle')}</span>` : ''}
             <div class="category-amounts">
               <span class="amount-spent">${formatCurrency(spent, currency)}</span>
               <span class="amount-budget">de ${formatCurrency(budgetLimit, currency)}</span>
@@ -304,11 +305,13 @@ async function loadCategoryExpenses(categoryId, wrapper) {
       <ul class="list" style="margin-top: var(--space-sm);">
         ${expenses.map(exp => `
           <li class="list-item expense-item" data-id="${exp.id}">
-            <div class="list-item-content">
-              <span class="list-item-title">${exp.description || 'Sin descripción'}</span>
-              <span class="list-item-subtitle">${formatDate(exp.date)}</span>
+            <div class="list-item-left">
+              <div class="list-item-content">
+                <span class="list-item-title">${exp.description || 'Sin descripción'}</span>
+                <span class="list-item-subtitle">${formatDate(exp.date)}</span>
+              </div>
             </div>
-            <div style="display: flex; align-items: center; gap: var(--space-sm);">
+            <div class="list-item-right">
               <span class="list-item-amount expense">${formatCurrency(exp.amount, currency)}</span>
               <button class="btn btn-ghost btn-icon delete-expense-btn" data-id="${exp.id}" aria-label="Eliminar">
                 ${getIcon('trash')}

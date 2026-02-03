@@ -142,12 +142,18 @@ async function loadArchiveDetails(month, container) {
           <h5 style="color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--space-sm);">
             Gastos Fijos (${formatCurrency(summary.totalFixedExpenses, currency)})
           </h5>
-          ${fixedExpenses.map(fe => `
-            <div class="list-item" style="padding: var(--space-sm);">
-              <span>${fe.name}</span>
-              <span class="list-item-amount expense">${formatCurrency(fe.amount, currency)}</span>
-            </div>
-          `).join('')}
+          <ul class="list">
+            ${fixedExpenses.map(fe => `
+              <li class="list-item" style="padding: var(--space-sm);">
+                <div class="list-item-left">
+                  <span class="list-item-title">${fe.name}</span>
+                </div>
+                <div class="list-item-right">
+                  <span class="list-item-amount expense">${formatCurrency(fe.amount, currency)}</span>
+                </div>
+              </li>
+            `).join('')}
+          </ul>
         </div>
         
         <!-- Categories -->
@@ -155,24 +161,29 @@ async function loadArchiveDetails(month, container) {
           <h5 style="color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--space-sm);">
             Categorías
           </h5>
-          ${categories.map(cat => `
-            <div class="category-item" style="margin-bottom: var(--space-sm);">
-              <div class="category-header">
-                <div class="category-name">
-                  <span class="category-dot" style="background: ${cat.color}"></span>
-                  <span>${cat.name}</span>
+          <div class="categories-list">
+            ${categories.map(cat => `
+              <div class="category-item" style="margin-bottom: var(--space-sm);">
+                <div class="category-header">
+                  <div class="category-name">
+                    <span class="category-dot" style="background: ${cat.color}"></span>
+                    <span class="category-name-text">${cat.name}</span>
+                  </div>
+                  <div class="category-right">
+                    ${cat.percentage >= 80 ? `<span class="category-warning" title="Más del 80% del presupuesto usado">${getIcon('alertTriangle')}</span>` : ''}
+                    <div class="category-amounts">
+                      <span class="amount-spent">${formatCurrency(cat.spent, currency)}</span>
+                      <span class="amount-budget">de ${formatCurrency(cat.budgetLimit, currency)}</span>
+                    </div>
+                  </div>
                 </div>
-                <div class="category-amounts">
-                  <span class="amount-spent">${formatCurrency(cat.spent, currency)}</span>
-                  <span class="amount-budget">de ${formatCurrency(cat.budgetLimit, currency)}</span>
+                <div class="progress-bar">
+                  <div class="progress-fill ${getProgressStatus(cat.percentage)}" 
+                       style="width: ${Math.min(100, cat.percentage)}%; background: ${cat.color}"></div>
                 </div>
               </div>
-              <div class="progress-bar">
-                <div class="progress-fill ${getProgressStatus(cat.percentage)}" 
-                     style="width: ${Math.min(100, cat.percentage)}%; background: ${cat.color}"></div>
-              </div>
-            </div>
-          `).join('')}
+            `).join('')}
+          </div>
         </div>
       </div>
     `;
