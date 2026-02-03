@@ -14,13 +14,30 @@ export function formatCurrency(amount, currency = 'Q') {
   const absAmount = Math.abs(amount);
   const sign = amount < 0 ? '-' : '';
   
+  // Custom compact notation for large numbers
   if (absAmount >= 1000000) {
-    const formatter = new Intl.NumberFormat('es-GT', {
-      notation: 'compact',
-      compactDisplay: 'short',
+    let formattedNum;
+    let suffix;
+
+    if (absAmount >= 1.0e15) { // Quadrillion (10^15)
+      formattedNum = absAmount / 1.0e15;
+      suffix = ' Q'; // Quadrillion
+    } else if (absAmount >= 1.0e12) { // Trillion (10^12)
+      formattedNum = absAmount / 1.0e12;
+      suffix = ' T'; // Trillion
+    } else if (absAmount >= 1.0e9) { // Billion (10^9)
+      formattedNum = absAmount / 1.0e9;
+      suffix = ' B'; // Billion
+    } else { // Million (10^6)
+      formattedNum = absAmount / 1.0e6;
+      suffix = ' M'; // Million
+    }
+
+    const formatted = formattedNum.toLocaleString('es-GT', {
+      minimumFractionDigits: 0,
       maximumFractionDigits: 1
     });
-    return `${sign}${currency}${formatter.format(absAmount)}`;
+    return `${sign}${currency}${formatted}${suffix}`;
   }
   
   const formatted = absAmount.toLocaleString('es-GT', {
@@ -66,10 +83,12 @@ export function formatDateTime(dateString) {
 export function getMonthName(monthString) {
   const [year, month] = monthString.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1);
-  return date.toLocaleDateString('es-GT', {
+  const name = date.toLocaleDateString('es-GT', {
     month: 'long',
     year: 'numeric'
   });
+  // Capitalize first letter
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 /**

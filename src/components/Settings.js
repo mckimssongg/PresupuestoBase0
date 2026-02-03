@@ -31,16 +31,16 @@ export async function renderSettings() {
       <div class="container">
         <!-- Current Month Status -->
         <div class="card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg);">
-            <div>
-              <span style="font-size: var(--font-size-xs); color: var(--text-tertiary); text-transform: uppercase;">Mes Actual</span>
-              <h3 style="text-transform: capitalize; margin: 4px 0 0 0;">
+          <div class="month-status-header">
+            <div class="month-info">
+              <span class="label label-closed">Mes Actual</span>
+              <h3 class="month-name">
                 ${getMonthName(currentMonth || db.getCurrentMonth())}
               </h3>
             </div>
-            <div style="text-align: right;">
-              <span style="font-size: var(--font-size-xs); color: var(--text-tertiary);">Disponible</span>
-              <div class="${realAvailable >= 0 ? 'income' : 'expense'}" style="font-weight: 600;">
+            <div class="month-amount">
+              <span class="label label-closed">Disponible</span>
+              <div class="${realAvailable >= 0 ? 'income' : 'expense'} amount-value">
                 ${formatCurrency(realAvailable, currency)}
               </div>
             </div>
@@ -49,9 +49,24 @@ export async function renderSettings() {
           <button class="btn btn-primary" id="close-month-btn" style="width: 100%;">
             Cerrar Mes
           </button>
-          <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); text-align: center; margin-top: var(--space-sm);">
+          <p class="helper-text">
             Archiva el mes actual y reinicia gastos
           </p>
+        </div>
+        
+        <!-- App Settings (PWA) -->
+        <div id="app-settings-section" style="display: none;">
+          <div class="section-header">
+            <h3 class="section-title">Aplicación</h3>
+          </div>
+          <div class="card">
+            <button class="btn btn-primary" id="install-app-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              ${getIcon('plus')} Instalar Aplicación
+            </button>
+            <p class="helper-text" style="margin-top: var(--space-md);">
+              Instala la app en tu dispositivo para un acceso más rápido y sin conexión
+            </p>
+          </div>
         </div>
         
         <!-- Currency Settings -->
@@ -92,7 +107,7 @@ export async function renderSettings() {
             </div>
           </div>
           
-          <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); text-align: center; margin-top: var(--space-md);">
+          <p class="helper-text" style="margin-top: var(--space-md);">
             Backup JSON con todos tus datos
           </p>
         </div>
@@ -148,19 +163,47 @@ export function initSettings(refreshView) {
   // Currency selector
   const currencySelect = document.getElementById('currency-select');
   currencySelect?.addEventListener('change', async (e) => {
-    const selectedCode = e.target.value;
-    const selectedCurrency = AVAILABLE_CURRENCIES.find(c => c.code === selectedCode);
-    
-    if (selectedCurrency) {
-      try {
-        await db.updateSettings({ currency: selectedCurrency.symbol });
-        showToast(`Moneda cambiada a ${selectedCurrency.name}`, 'success');
-        // Trigger full app refresh to update all currency displays
-        window.dispatchEvent(new CustomEvent('expense-changed'));
-      } catch (error) {
-        handleError(error, 'updateCurrency');
-      }
+    try {
+      await db.saveSettings({ currency: e.target.value });
+      showToast('Moneda actualizada');
+      // Force reload to update all currency displays
+      window.location.reload();
+    } catch (error) {
+      handleError(error, 'updateCurrency');
     }
+  });
+
+  // PWA Install Logic
+  const installSection = document.getElementById('app-settings-section');
+  const installBtn = document.getElementById('install-app-btn');
+  
+  function checkInstallState() {
+    if (window.deferredPrompt && installSection) {
+      installSection.style.display = 'block';
+    }
+  }
+  
+  // Check initially
+  checkInstallState();
+  
+  // Listen for event if not yet ready
+  window.addEventListener('app-installable', checkInstallState);
+  
+  installBtn?.addEventListener('click', async () => {
+    if (!window.deferredPrompt) return;
+    
+    // Show the install prompt
+    window.deferredPrompt.prompt();
+    
+    // Wait for the user to respond to the prompt
+    const { outcome } = await window.deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    
+    // We've used the prompt, and can't use it again, throw it away
+    window.deferredPrompt = null;
+    
+    // Hide section
+    if (installSection) installSection.style.display = 'none';
   });
   
   // Export button

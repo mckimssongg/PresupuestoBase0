@@ -19,6 +19,23 @@ const state = {
   isLoading: true
 };
 
+// PWA Install Prompt
+window.deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // Prevent Chrome 67 and earlier from automatically showing the prompt
+  e.preventDefault();
+  // Stash the event so it can be triggered later.
+  window.deferredPrompt = e;
+  // Dispatch event for UI to update
+  window.dispatchEvent(new CustomEvent('app-installable'));
+});
+
+window.addEventListener('appinstalled', () => {
+  window.deferredPrompt = null;
+  window.dispatchEvent(new CustomEvent('app-installed'));
+});
+
 /**
  * Initialize the application
  */
