@@ -31,6 +31,18 @@ export const SETTINGS_SCHEMA = {
 };
 
 /**
+ * Available currencies for Central American countries
+ */
+export const AVAILABLE_CURRENCIES = [
+  { code: 'Q', name: 'Quetzal', country: 'Guatemala', symbol: 'Q' },
+  { code: 'MXN', name: 'Peso Mexicano', country: 'México', symbol: '$' },
+  { code: 'CRC', name: 'Colón', country: 'Costa Rica', symbol: '₡' },
+  { code: 'HNL', name: 'Lempira', country: 'Honduras', symbol: 'L' },
+  { code: 'NIO', name: 'Córdoba', country: 'Nicaragua', symbol: 'C$' },
+  { code: 'USD', name: 'Dólar', country: 'El Salvador', symbol: '$' }
+];
+
+/**
  * Fixed Expense schema
  * Recurring monthly expenses (rent, utilities, etc.)
  */

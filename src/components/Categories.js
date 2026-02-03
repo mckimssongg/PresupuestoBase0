@@ -65,15 +65,16 @@ function renderCategoryItem(category, currency, isExpanded = false) {
       <div class="category-item category-expandable ${isExpanded ? 'expanded' : ''}" 
            role="button" tabindex="0" aria-expanded="${isExpanded}">
         <div class="category-header">
-          <div class="category-name" style="display: flex; align-items: center; gap: var(--space-sm);">
+          <div class="category-name">
             <span class="drag-handle">${getIcon('grip')}</span>
             <span class="category-dot" style="background: ${color}"></span>
             <span>${name}</span>
             ${expenseCount > 0 ? `<span style="font-size: var(--font-size-xs); color: var(--text-tertiary);">(${expenseCount})</span>` : ''}
           </div>
-          <div style="display: flex; align-items: center; gap: var(--space-sm);">
+          <div style="display: flex; align-items: center; gap: var(--space-xs);">
             <div class="category-amounts">
-              <span>${formatCurrency(spent, currency)}</span> / ${formatCurrency(budgetLimit, currency)}
+              <span class="amount-spent">${formatCurrency(spent, currency)}</span>
+              <span class="amount-budget">de ${formatCurrency(budgetLimit, currency)}</span>
             </div>
             <span class="category-chevron">${getIcon('chevronDown')}</span>
           </div>
@@ -82,9 +83,9 @@ function renderCategoryItem(category, currency, isExpanded = false) {
           <div class="progress-fill ${getProgressStatus(percentage)}" 
                style="width: ${Math.min(100, percentage)}%; background: ${color}"></div>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-top: var(--space-xs); font-size: var(--font-size-xs); color: var(--text-secondary);">
+        <div class="category-progress-info">
           <span>${Math.round(percentage)}% usado</span>
-          <span class="${remaining < 0 ? 'text-danger' : ''}">
+          <span class="remaining-amount ${remaining < 0 ? 'text-danger' : ''}">
             ${remaining >= 0 ? 'Quedan' : 'Excedido'} ${formatCurrency(Math.abs(remaining), currency)}
           </span>
         </div>

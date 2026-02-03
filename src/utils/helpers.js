@@ -5,17 +5,19 @@
 
 /**
  * Format amount with currency symbol
+ * Always shows the full number
  * @param {number} amount - The amount to format
  * @param {string} currency - Currency symbol (default: Q)
  * @returns {string} Formatted amount
  */
 export function formatCurrency(amount, currency = 'Q') {
   const absAmount = Math.abs(amount);
+  const sign = amount < 0 ? '-' : '';
+  
   const formatted = absAmount.toLocaleString('es-GT', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-  const sign = amount < 0 ? '-' : '';
   return `${sign}${currency}${formatted}`;
 }
 

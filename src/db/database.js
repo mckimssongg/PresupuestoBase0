@@ -517,7 +517,10 @@ export async function exportData() {
 
 /**
  * Import data from backup
- * Now supports archives
+ * Supports retrocompatibility with old export formats:
+ * - v1: No monthlyArchives
+ * - v2+: With monthlyArchives
+ * - Ensures all expenses have proper month field
  */
 export async function importData(backup) {
   if (!backup?.data) {
@@ -526,6 +529,15 @@ export async function importData(backup) {
   
   const db = await getDB();
   const { settings, fixedExpenses, categories, expenses, monthlyArchives } = backup.data;
+  
+  // Handle retrocompatibility: ensure expenses have month field
+  const processedExpenses = (expenses || []).map(expense => {
+    if (!expense.month && expense.date) {
+      const [year, month] = expense.date.split('-');
+      return { ...expense, month: `${year}-${month}` };
+    }
+    return expense;
+  });
   
   // Clear existing data
   const stores = [STORES.SETTINGS, STORES.FIXED_EXPENSES, STORES.CATEGORIES, STORES.EXPENSES];
@@ -539,7 +551,9 @@ export async function importData(backup) {
   
   // Import all data
   if (settings) {
-    await tx.objectStore(STORES.SETTINGS).put(settings);
+    // Ensure settings has an id for the keyPath
+    const settingsToImport = { ...settings, id: settings.id || 'main' };
+    await tx.objectStore(STORES.SETTINGS).put(settingsToImport);
   }
   
   for (const item of fixedExpenses || []) {
@@ -550,11 +564,11 @@ export async function importData(backup) {
     await tx.objectStore(STORES.CATEGORIES).put(item);
   }
   
-  for (const item of expenses || []) {
+  for (const item of processedExpenses) {
     await tx.objectStore(STORES.EXPENSES).put(item);
   }
   
-  // Import archives if store exists
+  // Import archives if store exists (retrocompatibility: old exports may not have this)
   if (db.objectStoreNames.contains(STORES.MONTHLY_ARCHIVES) && monthlyArchives) {
     for (const item of monthlyArchives) {
       await tx.objectStore(STORES.MONTHLY_ARCHIVES).put(item);
@@ -562,6 +576,8 @@ export async function importData(backup) {
   }
   
   await tx.done;
+  
+  console.log(`Imported data: ${fixedExpenses?.length || 0} fixed expenses, ${categories?.length || 0} categories, ${processedExpenses.length} expenses, ${monthlyArchives?.length || 0} archives`);
 }
 
 // ==========================================
@@ -704,5 +720,37 @@ export async function deleteArchive(month) {
 export async function getAllExpenses() {
   const db = await getDB();
   return db.getAll(STORES.EXPENSES);
+}
+
+/**
+ * Get all available months that have data (expenses or archives)
+ * @returns {Promise<Array<string>>} Array of months in YYYY-MM format, sorted descending
+ */
+export async function getAvailableMonths() {
+  const db = await getDB();
+  
+  // Get months from expenses
+  const expenses = await db.getAll(STORES.EXPENSES);
+  const expenseMonths = new Set(expenses.map(e => e.month));
+  
+  // Get months from archives
+  const archives = await db.getAll(STORES.MONTHLY_ARCHIVES);
+  const archiveMonths = new Set(archives.map(a => a.month));
+  
+  // Combine and include current month
+  const allMonths = new Set([...expenseMonths, ...archiveMonths, getCurrentMonth()]);
+  
+  // Sort descending (most recent first)
+  return Array.from(allMonths).sort((a, b) => b.localeCompare(a));
+}
+
+/**
+ * Get all available years that have data
+ * @returns {Promise<Array<number>>} Array of years, sorted descending
+ */
+export async function getAvailableYears() {
+  const months = await getAvailableMonths();
+  const years = new Set(months.map(m => parseInt(m.split('-')[0])));
+  return Array.from(years).sort((a, b) => b - a);
 }
 

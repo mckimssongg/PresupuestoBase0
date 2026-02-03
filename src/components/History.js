@@ -78,7 +78,7 @@ function renderArchiveItem(archive) {
         </div>
         
         <!-- Mini summary -->
-        <div style="display: flex; gap: var(--space-lg); font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-md);">
+        <div style="display: flex; flex-wrap: wrap; gap: var(--space-sm) var(--space-lg); font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--space-md);">
           <span>Ingreso: <span class="income">${formatCurrency(monthlyIncome, currency)}</span></span>
           <span>Gastado: <span class="expense">${formatCurrency(totalSpent, currency)}</span></span>
         </div>
@@ -160,10 +160,11 @@ async function loadArchiveDetails(month, container) {
               <div class="category-header">
                 <div class="category-name">
                   <span class="category-dot" style="background: ${cat.color}"></span>
-                  ${cat.name}
+                  <span>${cat.name}</span>
                 </div>
                 <div class="category-amounts">
-                  <span>${formatCurrency(cat.spent, currency)}</span> / ${formatCurrency(cat.budgetLimit, currency)}
+                  <span class="amount-spent">${formatCurrency(cat.spent, currency)}</span>
+                  <span class="amount-budget">de ${formatCurrency(cat.budgetLimit, currency)}</span>
                 </div>
               </div>
               <div class="progress-bar">

@@ -8,14 +8,17 @@ import { calculatePercentage } from '../utils/helpers.js';
 
 /**
  * Get complete budget overview
+ * @param {string} [month] - Optional month in YYYY-MM format (defaults to current)
  * @returns {Promise<Object>} Budget summary
  */
-export async function getBudgetOverview() {
+export async function getBudgetOverview(month = null) {
+  const targetMonth = month || db.getCurrentMonth();
+  
   const [settings, fixedExpenses, categories, expenses] = await Promise.all([
     db.getSettings(),
     db.getAllFixedExpenses(),
     db.getAllCategories(),
-    db.getExpensesForMonth()
+    db.getExpensesForMonth(targetMonth)
   ]);
   
   const monthlyIncome = settings?.monthlyIncome || 0;
@@ -45,7 +48,8 @@ export async function getBudgetOverview() {
     unassigned,
     realAvailable,
     currency: settings?.currency || 'Q',
-    currentMonth: settings?.currentMonth || db.getCurrentMonth(),
+    currentMonth: targetMonth,
+    isCurrentMonth: targetMonth === db.getCurrentMonth(),
     // Percentages
     fixedExpensesPercent: calculatePercentage(totalFixedExpenses, monthlyIncome),
     budgetedPercent: calculatePercentage(totalBudgeted, availableForBudget),
@@ -81,12 +85,13 @@ export async function getCategoryWithSpending(categoryId) {
 
 /**
  * Get all categories with spending summary
+ * @param {string} [month] - Optional month in YYYY-MM format (defaults to current)
  * @returns {Promise<Array>} Categories with spending
  */
-export async function getAllCategoriesWithSpending() {
+export async function getAllCategoriesWithSpending(month = null) {
   const [categories, expenses] = await Promise.all([
     db.getAllCategories(),
-    db.getExpensesForMonth()
+    db.getExpensesForMonth(month)
   ]);
   
   // Group expenses by category

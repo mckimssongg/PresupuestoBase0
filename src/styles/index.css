@@ -276,10 +276,15 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .balance-amount {
-  font-size: var(--font-size-3xl);
+  font-size: clamp(1.25rem, 8vw, 2rem);
   font-weight: 700;
   color: var(--accent-primary);
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  text-align: center;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
 .balance-amount.negative {
@@ -319,11 +324,13 @@ h3 { font-size: var(--font-size-lg); }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-sm);
   padding: var(--space-md);
   background: var(--bg-secondary);
   border-radius: var(--radius-md);
   margin-bottom: var(--space-sm);
   transition: background var(--transition-fast);
+  min-width: 0; /* Allow flex children to shrink */
 }
 
 .list-item:active {
@@ -339,6 +346,11 @@ h3 { font-size: var(--font-size-lg); }
 .list-item-title {
   font-weight: 500;
   color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
 
 .list-item-subtitle {
@@ -347,8 +359,11 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .list-item-amount {
+  font-size: clamp(0.7rem, 3vw, 0.875rem);
   font-weight: 600;
   color: var(--text-primary);
+  text-align: right;
+  white-space: nowrap;
 }
 
 .list-item-amount.expense {
@@ -366,8 +381,9 @@ h3 { font-size: var(--font-size-lg); }
 .category-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: var(--space-sm);
+  gap: var(--space-md);
 }
 
 .category-name {
@@ -375,22 +391,69 @@ h3 { font-size: var(--font-size-lg); }
   align-items: center;
   gap: var(--space-sm);
   font-weight: 500;
+  flex: 0 1 auto;
+  min-width: 60px;
+  max-width: 50%;
+}
+
+.category-name > span:not(.category-dot):not(.drag-handle) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .category-dot {
   width: 12px;
   height: 12px;
   border-radius: var(--radius-full);
+  flex-shrink: 0;
 }
 
+/* Category amounts - displays spent/budget with scaling */
 .category-amounts {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.category-amounts span {
-  color: var(--text-primary);
+.category-amounts .amount-spent {
+  font-size: clamp(0.7rem, 3.5vw, 0.9rem);
   font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.category-amounts .amount-budget {
+  font-size: clamp(0.6rem, 2.5vw, 0.75rem);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Progress row at bottom */
+.category-progress-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  gap: var(--space-sm);
+}
+
+.category-progress-info .remaining-amount {
+  text-align: right;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Buttons */
@@ -827,8 +890,11 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .summary-card-value {
-  font-size: var(--font-size-lg);
+  font-size: clamp(0.75rem, 4vw, 1.125rem);
   font-weight: 600;
+  line-height: 1.3;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .summary-card-value.income {

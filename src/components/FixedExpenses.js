@@ -89,6 +89,9 @@ export async function renderFixedExpenses() {
                 </div>
                 <div style="display: flex; align-items: center; gap: var(--space-sm);">
                   <span class="list-item-amount expense">${formatCurrency(expense.amount, currency)}</span>
+                  <button class="btn btn-ghost btn-icon edit-fixed-btn" data-id="${expense.id}" aria-label="Editar">
+                    ${getIcon('edit')}
+                  </button>
                   <button class="btn btn-ghost btn-icon delete-fixed-btn" data-id="${expense.id}" aria-label="Eliminar">
                     ${getIcon('trash')}
                   </button>
@@ -160,6 +163,24 @@ export function initFixedExpenses(refreshView) {
         } catch (error) {
           handleError(error, 'deleteFixedExpense');
         }
+      }
+    });
+  });
+  
+  // Edit buttons
+  document.querySelectorAll('.edit-fixed-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      
+      try {
+        const fixedExpenses = await db.getAllFixedExpenses();
+        const expense = fixedExpenses.find(fe => fe.id === id);
+        if (expense) {
+          openEditFixedModal(expense, refreshView);
+        }
+      } catch (error) {
+        handleError(error, 'loadFixedExpense');
       }
     });
   });
@@ -276,6 +297,51 @@ function openAddFixedModal(refreshView) {
         refreshView();
       } catch (error) {
         handleError(error, 'createFixedExpense');
+      }
+    }
+  });
+}
+
+/**
+ * Open modal to edit fixed expense
+ */
+function openEditFixedModal(expense, refreshView) {
+  openModal({
+    title: 'Editar Gasto Fijo',
+    content: `
+      <form id="edit-fixed-form">
+        <div class="form-group">
+          <label class="form-label" for="fixed-name">Nombre</label>
+          <input type="text" id="fixed-name" name="name" class="form-input" 
+                 value="${expense.name}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="fixed-amount">Monto</label>
+          <input type="number" id="fixed-amount" name="amount" class="form-input" 
+                 value="${expense.amount}" min="0" step="0.01" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Guardar Cambios
+        </button>
+      </form>
+    `,
+    onSubmit: async (data) => {
+      try {
+        validateForm(data, {
+          name: { required: true, type: 'string', label: 'Nombre' },
+          amount: { required: true, type: 'number', min: 0, label: 'Monto' }
+        });
+        
+        await db.updateFixedExpense(expense.id, {
+          name: data.name.trim(),
+          amount: parseFloat(data.amount)
+        });
+        
+        showToast('Gasto fijo actualizado', 'success');
+        closeModal();
+        refreshView();
+      } catch (error) {
+        handleError(error, 'updateFixedExpense');
       }
     }
   });

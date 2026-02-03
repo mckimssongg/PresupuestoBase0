@@ -4,6 +4,7 @@
  */
 
 import * as db from '../db/database.js';
+import { AVAILABLE_CURRENCIES } from '../db/schema.js';
 import { formatCurrency, getMonthName } from '../utils/helpers.js';
 import { showToast, handleError } from '../utils/errorHandler.js';
 import { getIcon } from './Icons.js';
@@ -22,6 +23,9 @@ export async function renderSettings() {
     
     const { currency, currentMonth } = settings || {};
     const { realAvailable } = overview;
+    
+    // Find current currency info
+    const currentCurrency = AVAILABLE_CURRENCIES.find(c => c.code === currency || c.symbol === currency) || AVAILABLE_CURRENCIES[0];
     
     return `
       <div class="container">
@@ -48,6 +52,24 @@ export async function renderSettings() {
           <p style="font-size: var(--font-size-xs); color: var(--text-tertiary); text-align: center; margin-top: var(--space-sm);">
             Archiva el mes actual y reinicia gastos
           </p>
+        </div>
+        
+        <!-- Currency Settings -->
+        <div class="section-header">
+          <h3 class="section-title">Moneda</h3>
+        </div>
+        
+        <div class="card">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" for="currency-select">Selecciona tu moneda</label>
+            <select id="currency-select" class="form-input form-select" style="cursor: pointer;">
+              ${AVAILABLE_CURRENCIES.map(curr => `
+                <option value="${curr.code}" ${(currency === curr.code || currency === curr.symbol) ? 'selected' : ''}>
+                  ${curr.symbol} - ${curr.name} (${curr.country})
+                </option>
+              `).join('')}
+            </select>
+          </div>
         </div>
         
         <!-- Data Management -->
@@ -78,7 +100,7 @@ export async function renderSettings() {
         <!-- App Info -->
         <div style="text-align: center; margin-top: var(--space-xl); color: var(--text-tertiary);">
           <span style="color: var(--accent-primary); font-weight: 500;">Presupuesto Base 0</span>
-          <span style="font-size: var(--font-size-xs);"> • v1.1</span>
+          <span style="font-size: var(--font-size-xs);"> • v1.2</span>
         </div>
       </div>
     `;
@@ -119,6 +141,24 @@ export function initSettings(refreshView) {
         handleError(error, 'closeMonth');
         closeMonthBtn.disabled = false;
         closeMonthBtn.innerHTML = 'Cerrar Mes';
+      }
+    }
+  });
+  
+  // Currency selector
+  const currencySelect = document.getElementById('currency-select');
+  currencySelect?.addEventListener('change', async (e) => {
+    const selectedCode = e.target.value;
+    const selectedCurrency = AVAILABLE_CURRENCIES.find(c => c.code === selectedCode);
+    
+    if (selectedCurrency) {
+      try {
+        await db.updateSettings({ currency: selectedCurrency.symbol });
+        showToast(`Moneda cambiada a ${selectedCurrency.name}`, 'success');
+        // Trigger full app refresh to update all currency displays
+        window.dispatchEvent(new CustomEvent('expense-changed'));
+      } catch (error) {
+        handleError(error, 'updateCurrency');
       }
     }
   });

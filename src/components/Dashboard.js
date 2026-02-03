@@ -17,14 +17,30 @@ let charts = {
 // Current tab state
 let currentTab = 'resumen';
 
+// Selected month for viewing (null = current month)
+let selectedMonth = null;
+
 /**
  * Render the dashboard view with tabs
  * @returns {Promise<string>} HTML content
  */
 export async function renderDashboard() {
   try {
-    const overview = await BudgetService.getBudgetOverview();
-    const categoriesWithSpending = await BudgetService.getAllCategoriesWithSpending();
+    // Get available months for navigation
+    const availableMonths = await db.getAvailableMonths();
+    const currentRealMonth = db.getCurrentMonth();
+    
+    // Use selected month or default to current
+    const viewMonth = selectedMonth || currentRealMonth;
+    const isCurrentMonth = viewMonth === currentRealMonth;
+    
+    // Get current month index in available months
+    const currentIndex = availableMonths.indexOf(viewMonth);
+    const hasPrevious = currentIndex < availableMonths.length - 1;
+    const hasNext = currentIndex > 0;
+    
+    const overview = await BudgetService.getBudgetOverview(viewMonth);
+    const categoriesWithSpending = await BudgetService.getAllCategoriesWithSpending(viewMonth);
     
     const {
       monthlyIncome,
@@ -51,12 +67,21 @@ export async function renderDashboard() {
     
     return `
       <div class="container">
-        <!-- Month Header with Tabs -->
+        <!-- Month Header with Navigation and Tabs -->
         <div style="margin-bottom: var(--space-md);">
-          <div style="text-align: center; margin-bottom: var(--space-md);">
-            <span style="font-size: var(--font-size-sm); color: var(--text-secondary);">
-              ${getMonthName(currentMonth)}
-            </span>
+          <div class="month-navigator" style="display: flex; align-items: center; justify-content: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+            <button class="btn btn-ghost btn-icon month-nav-btn" id="prev-month-btn" ${!hasPrevious ? 'disabled style="opacity: 0.3; pointer-events: none;"' : ''} aria-label="Mes anterior">
+              ${getIcon('chevronLeft')}
+            </button>
+            <div style="text-align: center; min-width: 140px;">
+              <span style="font-size: var(--font-size-md); font-weight: 500; color: var(--text-primary); text-transform: capitalize;">
+                ${getMonthName(viewMonth)}
+              </span>
+              ${!isCurrentMonth ? '<div style="font-size: var(--font-size-xs); color: var(--accent-primary); margin-top: 2px;">Histórico</div>' : ''}
+            </div>
+            <button class="btn btn-ghost btn-icon month-nav-btn" id="next-month-btn" ${!hasNext ? 'disabled style="opacity: 0.3; pointer-events: none;"' : ''} aria-label="Mes siguiente">
+              ${getIcon('chevronRight')}
+            </button>
           </div>
           
           <!-- Tab Navigation -->
@@ -136,10 +161,11 @@ export async function renderDashboard() {
                   <div class="category-header">
                     <div class="category-name">
                       <span class="category-dot" style="background: ${cat.color}"></span>
-                      ${cat.name}
+                      <span>${cat.name}</span>
                     </div>
                     <div class="category-amounts">
-                      <span>${formatCurrency(cat.spent, currency)}</span> / ${formatCurrency(cat.budgetLimit, currency)}
+                      <span class="amount-spent">${formatCurrency(cat.spent, currency)}</span>
+                      <span class="amount-budget">de ${formatCurrency(cat.budgetLimit, currency)}</span>
                     </div>
                   </div>
                   <div class="progress-bar">
@@ -302,6 +328,40 @@ export function initDashboard() {
     });
   });
   
+  // Month navigation handlers
+  const prevMonthBtn = document.getElementById('prev-month-btn');
+  const nextMonthBtn = document.getElementById('next-month-btn');
+  
+  prevMonthBtn?.addEventListener('click', async () => {
+    const availableMonths = await db.getAvailableMonths();
+    const currentRealMonth = db.getCurrentMonth();
+    const viewMonth = selectedMonth || currentRealMonth;
+    const currentIndex = availableMonths.indexOf(viewMonth);
+    
+    if (currentIndex < availableMonths.length - 1) {
+      selectedMonth = availableMonths[currentIndex + 1];
+      // Trigger refresh
+      window.dispatchEvent(new CustomEvent('expense-changed'));
+    }
+  });
+  
+  nextMonthBtn?.addEventListener('click', async () => {
+    const availableMonths = await db.getAvailableMonths();
+    const currentRealMonth = db.getCurrentMonth();
+    const viewMonth = selectedMonth || currentRealMonth;
+    const currentIndex = availableMonths.indexOf(viewMonth);
+    
+    if (currentIndex > 0) {
+      selectedMonth = availableMonths[currentIndex - 1];
+      // If we're back to current month, reset selectedMonth to null
+      if (selectedMonth === currentRealMonth) {
+        selectedMonth = null;
+      }
+      // Trigger refresh
+      window.dispatchEvent(new CustomEvent('expense-changed'));
+    }
+  });
+  
   // Create charts if analisis tab is active
   if (currentTab === 'analisis') {
     setTimeout(() => {
@@ -309,6 +369,20 @@ export function initDashboard() {
       createComparisonChart();
     }, 100);
   }
+}
+
+/**
+ * Get currently selected month (for external use)
+ */
+export function getSelectedMonth() {
+  return selectedMonth || db.getCurrentMonth();
+}
+
+/**
+ * Set selected month (for external use)
+ */
+export function setSelectedMonth(month) {
+  selectedMonth = month;
 }
 
 /**
